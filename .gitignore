@@ -1,0 +1,7 @@
+data/
+dummy/
+temp/
+tokenizers/
+commands.md
+__pycache__/
+notebooks/dev.ipynb
