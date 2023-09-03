@@ -29,7 +29,7 @@ def save_txt(txt, path, mode="w", skip_blank=True):
         skip_blank (bool): Whether to skip blank lines.
 
     Returns:
-        None
+        None 
     """
     
     with open(path, mode=mode, encoding='utf-8') as file:
