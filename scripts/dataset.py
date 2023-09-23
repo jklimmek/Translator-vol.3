@@ -2,6 +2,9 @@ from torch.utils.data import Dataset
 
 
 class TranslatorDataset(Dataset):
+    """
+    Dataset class for translation.
+    """
     def __init__(self, src, tgt):
         super().__init__()
         self.src = src

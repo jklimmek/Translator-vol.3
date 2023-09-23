@@ -1,0 +1,69 @@
+tie_embedding_weights: true
+weight_init: small # tim vit moco small
+out_bias: false
+# These two are later defined in architecture but also here for convinience.
+vocab_size: 32000
+dim: 256
+
+encoder:
+  block_type: encoder
+  reversible: false
+  num_layers: 6
+  dim_model: 256
+  residual_norm_style: pre
+  position_encoding_config:
+    name: vocab
+    seq_len: 128
+    vocab_size: 32000
+  multi_head_config:
+    num_heads: 8
+    residual_dropout: 0.1
+    use_rotary_embeddings: true
+    bias: [false, false, false, false]
+    attention:
+      name: scaled_dot_product
+      dropout: 0.1
+      causal: false
+      seq_len: 128
+  feedforward_config:
+    name: MLP
+    dropout: 0.1
+    activation: gelu
+    hidden_layer_multiplier: 4
+    bias: false
+
+decoder:
+  block_type: decoder
+  reversible: false
+  num_layers: 6
+  dim_model: 256
+  residual_norm_style: pre
+  position_encoding_config:
+    name: vocab
+    seq_len: 128
+    vocab_size: 32000
+  multi_head_config_masked:
+    num_heads: 8
+    residual_dropout: 0.1
+    use_rotary_embeddings: true
+    bias: [false, false, false, false]
+    attention:
+      name: scaled_dot_product
+      dropout: 0.1
+      causal: true
+      seq_len: 128
+  multi_head_config_cross:
+    num_heads: 8
+    residual_dropout: 0.1
+    bias: [false, false, false, false]
+    attention:
+      name: scaled_dot_product
+      dropout: 0.1
+      causal: true
+      seq_len: 128
+  feedforward_config:
+    name: MLP
+    dropout: 0.1
+    activation: gelu
+    hidden_layer_multiplier: 4
+    bias: false

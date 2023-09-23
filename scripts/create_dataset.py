@@ -42,7 +42,7 @@ def texts_to_tensor_shards(path, temp_path, max_length):
 
         # Sanity length check.
         assert len(fr_files) == len(en_files), "Number of French and English files must be equal."
-        print(f"\nFound {len(fr_files)+len(en_files)} files.")
+        print(f"\nFound {len(fr_files) + len(en_files)} files.")
 
         # Loop over French and English files.
         for fr_file, en_file in zip(fr_files, en_files):
@@ -223,7 +223,7 @@ def parse_args():
                         help="Path to save the dataset.")
     parser.add_argument("--out-names", type=str, default="train.pt dev.pt test.pt",
                         help="Names of the output files.")
-    parser.add_argument("--max-length", type=int, default=128,
+    parser.add_argument("--max-length", type=int, default=104,
                         help="Maximum length of a sequence.")
     parser.add_argument("--temp-dir", type=str, default=".",
                         help="Path to store temp files.")
@@ -256,16 +256,16 @@ def main():
 
     # Split and save tensors into train, dev, and test.
     split_and_save_tensor(
-        tensor_path=french_path, 
-        train_percent=args.ratios[0], 
-        dev_percent=args.ratios[1], 
-        seed=args.seed
+        tensor_path = french_path, 
+        train_percent = args.ratios[0], 
+        dev_percent = args.ratios[1], 
+        seed = args.seed
     )
     split_and_save_tensor(
-        tensor_path=english_path, 
-        train_percent=args.ratios[0], 
-        dev_percent=args.ratios[1], 
-        seed=args.seed
+        tensor_path = english_path, 
+        train_percent = args.ratios[0], 
+        dev_percent = args.ratios[1], 
+        seed = args.seed
     )
 
     # Make directories for the final dataset.
@@ -277,9 +277,9 @@ def main():
 
         # Load tensors and create the dataset.
         make_dataset(
-            french_path=french_path.replace(".pt", split),
-            english_path=english_path.replace(".pt", split),
-            out_file=out_file
+            french_path = french_path.replace(".pt", split),
+            english_path = english_path.replace(".pt", split),
+            out_file = out_file
         )
 
         # Remove temp files.

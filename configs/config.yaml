@@ -1,0 +1,18 @@
+total_epochs: 5
+batch_size: 32                     # 32
+num_workers: 0                     # 0
+label_smoothing: 0.0               # 0.0
+precision: 32-true                 # 32-true
+accumulation_steps: 1              # 1
+gradient_clip_val: 0.5             # 0.5
+gradient_clip_algorithm: norm      # norm
+log_every_n_steps: 5               # 5
+log_diagnostics_every_n_steps: 10   # 10
+save_top_k: 1                      # 1
+seed: 2018                         # 2018
+
+train_dataset: "D:/projects/Torch/Translator vol.3/data/datasets/debug.pt"
+dev_dataset: "D:/projects/Torch/Translator vol.3/data/datasets/debug.pt"
+logs_dir: "D:/projects/Torch/Translator vol.3/logs"
+save_dir: "D:/projects/Torch/Translator vol.3/checkpoints"
+checkpoint: null #"D:/projects/Torch/Translator vol.3/checkpoints/Transformer_27M/epoch=79-train_loss=1.4108-dev_loss=1.0016.ckpt"
