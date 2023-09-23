@@ -1,6 +1,8 @@
 data/
 dummy/
 temp/
+logs/
+checkpoints/
 tokenizers/
 commands.md
 __pycache__/

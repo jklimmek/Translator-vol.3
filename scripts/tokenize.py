@@ -268,7 +268,7 @@ def parse_args():
                         help="Names of created French and English files.")
     parser.add_argument("--min-length", type=int, default=5,
                         help="All sentences shorter than this length will be dropped.")
-    parser.add_argument("--max-length", type=int, default=128,
+    parser.add_argument("--max-length", type=int, default=104,
                         help="All sentences greater than this length will be dropped.")
     parser.add_argument("--unknown-ratio", type=float, default=0.1,
                         help="If number of unknown tokens in line is greater than num \
@@ -307,24 +307,24 @@ def main():
 
     # Tokenize sequences.
     french_tokenized, english_tokenized = tokenize(
-        tokenizer=tokenizer,
-        french=french,
+        tokenizer = tokenizer,
+        french = french,
         english=english,
-        min_length=args.min_length,
-        max_length=args.max_length,
-        unknown_ratio=args.unknown_ratio,
-        compress_ratio=args.compress_ratio,
-        length_tolerance=args.length_tolerance,
-        unk_token=args.unknown_token
+        min_length = args.min_length,
+        max_length = args.max_length,
+        unknown_ratio = args.unknown_ratio,
+        compress_ratio = args.compress_ratio,
+        length_tolerance = args.length_tolerance,
+        unk_token = args.unknown_token
     )
     
     # Pack sequences.
     french_packed, english_packed = pack_sequences(
-        french=french_tokenized,
-        english=english_tokenized,
-        max_length=args.max_length,
-        sos_token=tokenizer.token_to_id(args.start_token),
-        eos_token=tokenizer.token_to_id(args.end_token)
+        french = french_tokenized,
+        english = english_tokenized,
+        max_length = args.max_length,
+        sos_token = tokenizer.token_to_id(args.start_token),
+        eos_token = tokenizer.token_to_id(args.end_token)
     )
 
     # Create output directory if it doesn't exist.
@@ -335,15 +335,15 @@ def main():
 
     # Save tokenized sequences to files.
     save_tokens(
-        tokens=french_packed,
-        path=args.out_dir,
-        file_name=french_file
+        tokens = french_packed,
+        path = args.out_dir,
+        file_name = french_file
     )
 
     save_tokens(
-        tokens=english_packed,
-        path=args.out_dir,
-        file_name=english_file
+        tokens = english_packed,
+        path = args.out_dir,
+        file_name = english_file
     )
     
 
