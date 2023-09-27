@@ -9,7 +9,7 @@ from tqdm import tqdm
 from .dataset import TranslatorDataset
 
 # Constants to store temp files.
-TEMP_DIR = "temp"
+TEMP_DIR = "_temp"
 FR_TEMP_SHARD = "_fr_temp_shard.pt"
 EN_TEMP_SHARD = "_en_temp_shard.pt"
 EN_TEMP_MERGED = "english_tensor.pt"
@@ -61,13 +61,17 @@ def texts_to_tensor_shards(path, temp_path, max_length):
 
                 # List to store tokens.
                 fr_tokens, en_tokens = [], []
-
+                
                 # Loop over lines.
                 for f, e in tqdm(zip(fr_lines, en_lines), total=len(fr_lines), ncols=100):
 
                     # Convert each line to a list of integers.
-                    fr_line = [int(x) for x in e.strip().split()]
-                    en_line = [int(x) for x in f.strip().split()]
+                    fr_line = [int(x) for x in f.strip().split()]
+                    en_line = [int(x) for x in e.strip().split()]
+
+                    # Check if the length of the sequence is in desired range.
+                    if len(fr_line) > max_length or len(en_line) > max_length + 1:
+                        continue
 
                     # Add padding to the end of the sequences.
                     fr_padding = [0] * (max_length - len(fr_line))
@@ -77,13 +81,12 @@ def texts_to_tensor_shards(path, temp_path, max_length):
                     fr_tokens.append(fr_line + fr_padding)
                     en_tokens.append(en_line + en_padding)
 
-                # Convert to tensors.
-                fr_tokens = torch.tensor(fr_tokens, dtype=torch.long)
-                en_tokens = torch.tensor(en_tokens, dtype=torch.long)
+                fr_tokens_tensor = torch.tensor(fr_tokens, dtype=torch.long)
+                en_tokens_tensor = torch.tensor(en_tokens, dtype=torch.long)
 
                 # Save temporary tensor shards.
-                torch.save(fr_tokens, os.path.join(temp_path, f"{file_counter}{FR_TEMP_SHARD}"))
-                torch.save(en_tokens, os.path.join(temp_path, f"{file_counter}{EN_TEMP_SHARD}"))
+                torch.save(fr_tokens_tensor, os.path.join(temp_path, f"{file_counter}{FR_TEMP_SHARD}"))
+                torch.save(en_tokens_tensor, os.path.join(temp_path, f"{file_counter}{EN_TEMP_SHARD}"))
                 
                 # Increment file counter.
                 file_counter += 1
@@ -99,9 +102,6 @@ def merge_and_save_tensor_shards(path, file_counter):
     Parameters:
         path (str): Path to tensor shards.
         file_counter (int): Number of files.
-
-    Returns:
-        None    
     """
 
     # List to merge tensor shards.
@@ -140,9 +140,6 @@ def split_and_save_tensor(tensor_path, train_percent, dev_percent, seed):
         train_percent (float): Percentage of data to use for training.
         dev_percent (float): Percentage of data to use for dev.
         seed (int): Random seed.
-
-    Returns:
-        None
     """
 
     # Set seed to ensure reproducibility for another run.
@@ -188,9 +185,6 @@ def make_dataset(french_path, english_path, out_file):
         french_path (str): Path to French tensor.
         english_path (str): Path to English tensor.
         out_file (str): Path to save the dataset.
-
-    Returns:
-        None
     """
 
     # Load French and English tensors.
@@ -246,6 +240,7 @@ def main():
 
     # Convert text files to tensor shards.
     file_counter = texts_to_tensor_shards(args.shards, temp_dir, args.max_length)
+    return
 
     # Merge tensor shards.
     merge_and_save_tensor_shards(temp_dir, file_counter)
