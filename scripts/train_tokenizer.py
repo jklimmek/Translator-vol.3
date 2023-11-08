@@ -15,9 +15,9 @@ def train_tokenizer(
         text, 
         vocab_size,
         pad_token,
+        unk_token,
         start_token,
         end_token,
-        unk_token,
         additional_alphabet=list()
     ):
     """
@@ -27,9 +27,9 @@ def train_tokenizer(
         text (list): List of text sequences.
         vocab_size (int): Desired vocabulary size.
         pad_token (str): Padding token.
+        unk_token (str): Unknown token.
         start_token (str): Start of sequence token.
         end_token (str): End of sequence token.
-        unk_token (str): Unknown token.
         additional_alphabet (list): Additional alphabet to use.
 
     Returns:
@@ -39,7 +39,7 @@ def train_tokenizer(
     # Initial alphabet.
     alphabet = list(
         "!\"#$£%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`\
-        abcdefghijklmnopqrstuvwxyz{|}~ÀÂÇÉÈÊËÎÏÔŒÙÛÜàâçéèêëîïôœùûü«»")
+        abcdefghijklmnopqrstuvwxyz{|}~ÀÂÇÉÈÊËÎÏÔÙÛÜàâçéèêëîïôùûü«»")
 
     # Extend alphabet with additional symbols.
     alphabet.extend(additional_alphabet)
@@ -64,17 +64,17 @@ def train_tokenizer(
 
     # Train tokenizer.
     trainer = trainers.WordPieceTrainer(
-        vocab_size=vocab_size,
-        special_tokens=special_tokens,
-        initial_alphabet=alphabet,
-        limit_alphabet=len(alphabet)
+        vocab_size = vocab_size,
+        special_tokens = special_tokens,
+        initial_alphabet = alphabet,
+        limit_alphabet = len(alphabet)
     )
 
     # Post-processing.
     tokenizer.decoder = decoders.WordPiece(prefix="##")
 
     # Train tokenizer.
-    tokenizer.train_from_iterator(text, trainer)
+    tokenizer.train(text, trainer)
 
     # Return tokenizer.
     return tokenizer
@@ -174,16 +174,15 @@ def parse_args():
     )
 
     # Add arguments.
-    parser.add_argument("--files", type=str, nargs=2,
-                        help="Path to French and English files.", required=True)
-    parser.add_argument("--vocab-size", type=int,
-                        help="Desired vocab size.", required=True)
-    parser.add_argument("--output-path", type=str,
-                        help="Path to save tokenizer.", required=True)
-    parser.add_argument("--alphabet", type=str,
-                        help="Additional alphabet.", default=list())
-    parser.add_argument("--stats-file", type=str, default=None,
-                        help="Path to save stats.")
+    parser.add_argument("--files", type=str, nargs="+", help="Path to French and English files.", required=True)
+    parser.add_argument("--vocab-size", type=int, help="Desired vocab size.", required=True)
+    parser.add_argument("--output-path", type=str, help="Path to save tokenizer.", required=True)
+    parser.add_argument("--alphabet", type=str, help="Additional alphabet.", default=list())
+    parser.add_argument("--stats-file", type=str, default=None, help="Path to save stats.")
+    parser.add_argument("--pad-token", type=str, default="<|padding|>", help="Padding token.")
+    parser.add_argument("--unk-token", type=str, default="<|unknown|>", help="Unknown token.")
+    parser.add_argument("--start-token", type=str, default="<|startofseq|>", help="Start of sequence token.")
+    parser.add_argument("--end-token", type=str, default="<|endofseq|>", help="End of sequence token.")
     
     # Return parsed arguments.
     return parser.parse_args()
@@ -194,33 +193,32 @@ def main():
     # Parse arguments.
     args = parse_args()
 
-    # Read texts.
-    text, text1 = read_txt(args.files[0]), read_txt(args.files[1])
-    assert len(text) == len(text1)
-    text.extend(text1)
-    del text1
-
     # Train tokenizer.
     tokenizer = train_tokenizer(
-        text=text,
-        vocab_size=args.vocab_size,
-        additional_alphabet=args.alphabet
+        text = args.files,
+        vocab_size = args.vocab_size,
+        additional_alphabet = args.alphabet,
+        pad_token = args.pad_token,
+        unk_token = args.unk_token,
+        start_token = args.start_token,
+        end_token = args.end_token
     )
 
     # Save tokenizer.
     tokenizer.save(args.output_path)
 
     # Calculate statistics.
+    text = [read_txt(file) for file in args.files]
     D, F, u = calculate_stats(tokenizer, text)
 
     # Save statistics if path is given.
     if args.stats_file is not None:
         save_stats(
-            D=D,
-            F=F,
-            u=u,
-            vocab_size=tokenizer.get_vocab_size(),
-            stats_file=args.stats_file
+            D = D,
+            F = F,
+            u = u,
+            vocab_size = tokenizer.get_vocab_size(),
+            stats_file = args.stats_file
         )
 
     # Print statistics. 

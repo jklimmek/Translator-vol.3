@@ -27,11 +27,21 @@ class Transformer(LightningModule):
                 )
             }
         )
+
+        # Tie decoder embedding weights if specified.
+        if architecture["tie_embedding_weights"]:
+            self.model["decoders_out"].weight = self.model.xformer.decoders[0].pose_encoding.word_embeddings.weight
+            assert (
+                self.model["decoders_out"].weight is self.model.xformer.decoders[0].pose_encoding.word_embeddings.weight and 
+                self.model["decoders_out"].weight is self.model.xformer.encoders[0].pose_encoding.word_embeddings.weight
+            ), "Embedding weights are not tied despite tie_embedding_weights=True"
+
         self.criterion = nn.CrossEntropyLoss(label_smoothing=config["label_smoothing"])
         self.architecture = architecture
         self.optimizer_config = optimizer
         self.config = config
-
+        
+        # Initialize encoder and decoder weights for logging.
         if self.config["log_diagnostics_every_n_steps"] > 0:
             self.encoder_weights = {}
             self.decoder_weights = {}
