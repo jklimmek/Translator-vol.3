@@ -240,7 +240,6 @@ def main():
 
     # Convert text files to tensor shards.
     file_counter = texts_to_tensor_shards(args.shards, temp_dir, args.max_length)
-    return
 
     # Merge tensor shards.
     merge_and_save_tensor_shards(temp_dir, file_counter)

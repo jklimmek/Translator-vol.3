@@ -106,7 +106,7 @@ def tokenize(
 
         # If everything was fine append tokens to lists.
         french_tokenized.append(french_tokens)
-        english_tokenized.append(english_tokens)
+        english_tokenized.append([2] + english_tokens + [3])
 
     # Check if lengths are the same.
     assert len(french_tokenized) == len(english_tokenized), "Lengths must be the same."
@@ -114,7 +114,7 @@ def tokenize(
     # Check if lengths are within limits.
     for fr, en in zip(french_tokenized, english_tokenized):
         assert len(fr) <= max_length, f"Length: {len(fr)} must be <= {max_length}."
-        assert len(en) <= max_length - 1, f"Length: {len(en)} must be <= {max_length - 1}."
+        assert len(en) <= max_length + 1, f"Length: {len(en)} must be <= {max_length - 1}."
 
     # Print statistics.
     print("\n##### Tokenizing Stats #####")
@@ -309,7 +309,7 @@ def main():
     french_tokenized, english_tokenized = tokenize(
         tokenizer = tokenizer,
         french = french,
-        english=english,
+        english = english,
         min_length = args.min_length,
         max_length = args.max_length,
         unknown_ratio = args.unknown_ratio,

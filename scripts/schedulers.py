@@ -22,11 +22,10 @@ class InvSqrtDecay(_LRScheduler):
         n = self.last_epoch + 1
         for base_lr in self.base_lrs:
             mult_coeff = self.lambda_val / math.sqrt(self.dim)
-            learning_rate = mult_coeff * \
-                min(1 / math.sqrt(n), n / self.warmup_steps ** 1.5)
+            learning_rate = mult_coeff * min(1 / math.sqrt(n), n / self.warmup_steps ** 1.5)
             lrs.append(learning_rate)
         return lrs
-
+    
 
 class Cosine(_LRScheduler):
     def __init__(

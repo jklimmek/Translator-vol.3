@@ -25,6 +25,7 @@ def read_txt(path, skip_blank=True):
             lines.append(line.strip())
     return lines
 
+
 def save_txt(txt, path, mode="w", skip_blank=True):
     """
     Saves a list of lines to a text file.
