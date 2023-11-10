@@ -38,8 +38,8 @@ def train_tokenizer(
 
     # Initial alphabet.
     alphabet = list(
-        "!\"#$£%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`\
-        abcdefghijklmnopqrstuvwxyz{|}~ÀÂÇÉÈÊËÎÏÔÙÛÜàâçéèêëîïôùûü«»")
+        "!\"#$£%&'()*+,-./0123456789:;<=>?@[]^_`abcdefghijklmnopqrstuvwxyz{|}~àâçéèêëîïôùûü«»"
+    )
 
     # Extend alphabet with additional symbols.
     alphabet.extend(additional_alphabet)
@@ -174,7 +174,7 @@ def parse_args():
     )
 
     # Add arguments.
-    parser.add_argument("--files", type=str, nargs="+", help="Path to French and English files.", required=True)
+    parser.add_argument("--files", type=str, help="Path to directory with files", required=True)
     parser.add_argument("--vocab-size", type=int, help="Desired vocab size.", required=True)
     parser.add_argument("--output-path", type=str, help="Path to save tokenizer.", required=True)
     parser.add_argument("--alphabet", type=str, help="Additional alphabet.", default=list())
@@ -193,9 +193,12 @@ def main():
     # Parse arguments.
     args = parse_args()
 
+    # Get files.
+    files = [os.path.join(args.files, file) for file in os.listdir(args.files)]
+
     # Train tokenizer.
     tokenizer = train_tokenizer(
-        text = args.files,
+        text = files,
         vocab_size = args.vocab_size,
         additional_alphabet = args.alphabet,
         pad_token = args.pad_token,
@@ -208,7 +211,7 @@ def main():
     tokenizer.save(args.output_path)
 
     # Calculate statistics.
-    text = [read_txt(file) for file in args.files]
+    text = [read_txt(file) for file in files]
     D, F, u = calculate_stats(tokenizer, text)
 
     # Save statistics if path is given.
