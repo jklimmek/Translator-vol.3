@@ -255,6 +255,7 @@ def main():
         dev_percent = args.ratios[1], 
         seed = args.seed
     )
+    
     split_and_save_tensor(
         tensor_path = english_path, 
         train_percent = args.ratios[0], 

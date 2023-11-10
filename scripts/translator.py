@@ -11,10 +11,9 @@ class Translator:
     After empirical evaluation it turns out that best translations are generated
     simply using beam search with length penalty.
     """
-    def __init__(self, model, tokenizer, maxlen, start_token, end_token, device):
+    def __init__(self, model, tokenizer, start_token, end_token, device):
         self.model = model
         self.tokenizer = tokenizer
-        self.maxlen = maxlen
         self.start_token = start_token
         self.end_token = end_token
         self.device = device
@@ -25,58 +24,60 @@ class Translator:
         cls, 
         checkpoint_path, 
         tokenizer_path, 
-        maxlen=104, 
-        start_token="<|startofseq|>", 
-        end_token="<|endofseq|>", 
-        device="cpu"
+        start_token = "<|startofseq|>", 
+        end_token = "<|endofseq|>", 
+        device = "cpu"
     ):
         tokenizer = Tokenizer.from_file(tokenizer_path)
-        tokenizer.enable_padding(length=maxlen)
-        tokenizer.enable_truncation(max_length=maxlen)
         model = Transformer.load_from_checkpoint(checkpoint_path)
         model.to(device)
         model.eval()
-        return cls(model, tokenizer, maxlen, start_token, end_token, device)
+        return cls(model, tokenizer, start_token, end_token, device)
 
 
     @torch.no_grad()
     def translate(
         self,
         text,
-        beam_size=1,
-        top_k=0,
-        top_p=0.0,
-        temperature=1.0,
-        length_penalty=0.0,
-        alpha=0.0
+        max_tokens = 104,
+        beam_size = 1,
+        top_k = 0,
+        top_p = 0.0,
+        temperature = 1.0,
+        length_penalty = 0.0,
+        alpha = 0.0
     ):
+        # Enable padding and truncation using the max_tokens parameter.
+        self.tokenizer.enable_padding(length=max_tokens)
+        self.tokenizer.enable_truncation(max_length=max_tokens)
+
         # Encode the text using the tokenizer and initialize the translation with the start token.
         x_tokens = self.tokenizer.encode(text, add_special_tokens=False).ids
         x = torch.tensor(x_tokens, device=self.device).unsqueeze(0)
-        y = torch.zeros((1, self.maxlen), dtype=torch.long, device=self.device)
+        y = torch.zeros((1, max_tokens), dtype=torch.long, device=self.device)
         start_token = self.tokenizer.token_to_id(self.start_token)
         y[0, 0] = start_token
 
         # Based on given parameters choose the appropriate generation method.
         if beam_size > 0 and top_k == 0 and top_p == 0:
-            tokens = self.__beam_search(x, y, beam_size=beam_size, length_penalty=length_penalty)
+            tokens = self.__beam_search(x, y, max_tokens=max_tokens, beam_size=beam_size, length_penalty=length_penalty)
         elif top_k > 0 and top_p == 0 and alpha == 0:
-            tokens = self.__top_k(x, y, top_k=top_k, temperature=temperature)
+            tokens = self.__top_k(x, y, max_tokens=max_tokens, top_k=top_k, temperature=temperature)
         elif top_k == 0 and top_p > 0 and alpha == 0:
-            tokens = self.__top_p(x, y, top_p=top_p, temperature=temperature)
+            tokens = self.__top_p(x, y, max_tokens=max_tokens, top_p=top_p, temperature=temperature)
         elif top_k > 0 and top_p == 0 and alpha > 0:
-            tokens = self.__contrastive_search(x, y, top_k=top_k, alpha=alpha)
+            tokens = self.__contrastive_search(x, y, max_tokens=max_tokens, top_k=top_k, alpha=alpha)
 
         # Decode the tokens into text and return it.
         translated = self.tokenizer.decode(tokens)
         return translated
     
 
-    def __beam_search(self, x, y, beam_size, length_penalty):
+    def __beam_search(self, x, y, max_tokens, beam_size, length_penalty):
         # Initialize beam candidates with the initial translation and a score of 0.0.
         beam_candidates = [{'translation': y, 'score': 0.0}]
 
-        for i in range(1, self.maxlen):
+        for i in range(1, max_tokens):
             # Store the candidates for the next beam in this list.
             next_beam_candidates = []
 
@@ -130,8 +131,8 @@ class Translator:
         return best_translation[0].cpu().numpy()
 
 
-    def __top_k(self, x, y, top_k, temperature):
-        for i in range(1, self.maxlen):
+    def __top_k(self, x, y, max_tokens, top_k, temperature):
+        for i in range(1, max_tokens):
 
             # Generate logits for the next token using the model.
             logits = self.model(src=x, tgt=y)
@@ -157,8 +158,8 @@ class Translator:
         return y[0].cpu().numpy() 
 
 
-    def __top_p(self, x, y, top_p, temperature):
-        for i in range(1, self.maxlen):
+    def __top_p(self, x, y, max_tokens, top_p, temperature):
+        for i in range(1, max_tokens):
 
             # Generate logits for the next token using the model.
             logits = self.model(src=x, tgt=y)
@@ -189,13 +190,13 @@ class Translator:
         return y[0].cpu().numpy()
 
 
-    def __contrastive_search(self, x, y, top_k, alpha):
+    def __contrastive_search(self, x, y, max_tokens, top_k, alpha):
         
         # Initialize the list of word embeddings with the embedding of the first token.
         word_embeddings_matrix = self.model.xformer.get_submodule("decoders.0.pose_encoding.word_embeddings")
         word_embeddings = [word_embeddings_matrix(y[:, 0]).squeeze(0)]
 
-        for i in range(1, self.maxlen):
+        for i in range(1, max_tokens):
 
             # Generate logits for the next token using the model.
             logits = self.model(src=x, tgt=y)
