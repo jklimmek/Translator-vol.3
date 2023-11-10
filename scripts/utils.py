@@ -26,7 +26,7 @@ def read_txt(path, skip_blank=True):
     return lines
 
 
-def save_txt(txt, path, mode="w", skip_blank=True):
+def save_txt(txt, path, mode="w", skip_blank=True, lower=False):
     """
     Saves a list of lines to a text file.
 
@@ -35,13 +35,14 @@ def save_txt(txt, path, mode="w", skip_blank=True):
         path (str): Path to text file.
         mode (str): Mode to open file.
         skip_blank (bool): Whether to skip blank lines.
+        lower (bool): Whether to convert to lowercase.
     """
     
-    with open(path, mode=mode, encoding='utf-8') as file:
+    with open(path, mode=mode, encoding="utf-8") as file:
         for line in txt:
-            if skip_blank and line == '':
+            if skip_blank and line == "":
                 continue
-            file.write(line + '\n')
+            file.write(line.lower() + "\n" if lower else line + "\n")
 
 
 def read_yaml(path):
