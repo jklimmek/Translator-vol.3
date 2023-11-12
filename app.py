@@ -62,9 +62,31 @@ class Slider:
         st.session_state[f"numeric_{self.index}"] = st.session_state[f"slider_{self.index}"]
 
 
+@st.cache_resource()
+def load_model():
+    """
+    Load model and tokenizer from checkpoint and tokenizer path.
+    Decorator ensures that the model is only loaded once.
+    """
+    translator = Translator.from_config(
+        checkpoint_path = MODEL_PATH,
+        tokenizer_path = TOKENIZER_PATH,
+    )
+    return translator
+
+
 def app():
+    """
+    Streamlit app to translate French text to English.
+    """
+
+    # Set page title, layout and favicon.
     st.set_page_config(page_title="French-English Translator", layout="wide", page_icon="🇫🇷")
     col1, col2 = st.columns((1, 2))
+
+    # Load model and tokenizer.
+    translator = load_model()
+
     with col1:
         st.subheader("Adjust generation parameterts")
 
@@ -147,7 +169,7 @@ def app():
         elif top_k == 0 and top_p > 0 and alpha == 0:
             message = f"Top-p sampling with p = {top_p} and temperature = {temperature}"
         elif top_k > 0 and top_p == 0 and alpha > 0:
-            message = f"Contrastive sampling with k = {top_k}, alpha = {alpha} and temperature = {temperature}"
+            message = f"Contrastive search with k = {top_k}, alpha = {alpha} and temperature = {temperature}"
         else:
             message = "No generation method selected"
 
@@ -159,20 +181,14 @@ def app():
             st.warning(message, icon="⚠️")
 
     with col2:
+        st.subheader("Enter French text to translate")
 
         # Display text area to enter French text.
-        st.subheader("Enter French text to translate")
         text = st.text_area(
             "French text", 
             placeholder = "Enter French text to translate", 
             height = 300, 
             label_visibility = "hidden"
-        )
-
-        # Load model and tokenizer.
-        translator = Translator.from_config(
-            checkpoint_path = MODEL_PATH,
-            tokenizer_path = TOKENIZER_PATH,
         )
 
         # Translate text.
