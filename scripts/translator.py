@@ -193,7 +193,7 @@ class Translator:
     def __contrastive_search(self, x, y, max_tokens, top_k, alpha):
         
         # Initialize the list of word embeddings with the embedding of the first token.
-        word_embeddings_matrix = self.model.xformer.get_submodule("decoders.0.pose_encoding.word_embeddings")
+        word_embeddings_matrix = self.model.model.xformer.get_submodule("decoders.0.pose_encoding.word_embeddings")
         word_embeddings = [word_embeddings_matrix(y[:, 0]).squeeze(0)]
 
         for i in range(1, max_tokens):

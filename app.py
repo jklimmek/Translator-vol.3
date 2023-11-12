@@ -7,6 +7,12 @@ MODEL_PATH = "checkpoints/Transformer_60M/epoch=02-train_loss=1.9006-dev_loss=1.
 
 
 class Slider:
+    """
+    A class to create a slider and a numeric input that are synced together.
+
+    Syncing is done by referencing the session state of the slider
+    to the session state of the numeric input and vice versa.
+    """
     def __init__(self, name, min_value, max_value, step, default, index=0, columns=(3, 1)):
         self.name = name
         self.min_value = min_value
@@ -56,13 +62,35 @@ class Slider:
         st.session_state[f"numeric_{self.index}"] = st.session_state[f"slider_{self.index}"]
 
 
+@st.cache_resource()
+def load_model():
+    """
+    Load model and tokenizer from checkpoint and tokenizer path.
+    Decorator ensures that the model is only loaded once.
+    """
+    translator = Translator.from_config(
+        checkpoint_path = MODEL_PATH,
+        tokenizer_path = TOKENIZER_PATH,
+    )
+    return translator
+
+
 def app():
+    """
+    Streamlit app to translate French text to English.
+    """
+
+    # Set page title, layout and favicon.
     st.set_page_config(page_title="French-English Translator", layout="wide", page_icon="🇫🇷")
-    # st.title("French-English Translator")
     col1, col2 = st.columns((1, 2))
+
+    # Load model and tokenizer.
+    translator = load_model()
+
     with col1:
         st.subheader("Adjust generation parameterts")
 
+        # Initialize sliders with parameters for generation.
         max_tokens = Slider(
             name = "max_tokens",
             min_value = 0,
@@ -71,6 +99,7 @@ def app():
             default = 104,
             index = 0
         )
+
         beam_size = Slider(
             name = "beam_size",
             min_value = 1,
@@ -123,6 +152,7 @@ def app():
             index = 6
         )
 
+        # Display sliders.
         max_tokens = max_tokens.value
         beam_size = beam_size.value
         temperature = temperature.value
@@ -131,6 +161,7 @@ def app():
         length_penalty = length_penalty.value
         alpha = alpha.value
 
+        # Display generation method.
         if beam_size > 0 and top_k == 0 and top_p == 0:
             message = f"Beam search with beam_size = {beam_size} and length penalty = {length_penalty}"
         elif top_k > 0 and top_p == 0 and alpha == 0:
@@ -138,10 +169,12 @@ def app():
         elif top_k == 0 and top_p > 0 and alpha == 0:
             message = f"Top-p sampling with p = {top_p} and temperature = {temperature}"
         elif top_k > 0 and top_p == 0 and alpha > 0:
-            message = f"Contrastive sampling with k = {top_k}, alpha = {alpha} and temperature = {temperature}"
+            message = f"Contrastive search with k = {top_k}, alpha = {alpha} and temperature = {temperature}"
         else:
             message = "No generation method selected"
 
+        # Display message and warning if no valid generation method is selected.
+        # E.g. if top_k and top_p are both > 0
         if message != "No generation method selected":
             st.info(message)
         else:
@@ -149,6 +182,8 @@ def app():
 
     with col2:
         st.subheader("Enter French text to translate")
+
+        # Display text area to enter French text.
         text = st.text_area(
             "French text", 
             placeholder = "Enter French text to translate", 
@@ -156,15 +191,8 @@ def app():
             label_visibility = "hidden"
         )
 
-        translator = Translator.from_config(
-            checkpoint_path = MODEL_PATH,
-            tokenizer_path = TOKENIZER_PATH,
-        )
-
+        # Translate text.
         if text:
-            # with st.spinner("Translating..."):
-            #    translation = "sample translation to be displayed."
-            
             st.subheader("English translation")
             with st.spinner("Translating..."):
                 translation = translator.translate(
@@ -177,14 +205,15 @@ def app():
                     length_penalty = length_penalty,
                     alpha = alpha
                 )
-            if translation is not None:
-                st.success("Translation Successful")
-                st.text_area("Translated Text", translation, height=300)
-            else:
-                st.error("Translation Failed:")
-                st.warning("Please check your input and try again.")
 
-        
+            # Display translated text.
+            st.text_area(
+                "Translated Text", 
+                translation, 
+                height=300, 
+                label_visibility="hidden"
+            )
+
 
 if __name__ == "__main__":
     app()
